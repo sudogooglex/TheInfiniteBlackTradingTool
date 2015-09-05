@@ -5,11 +5,8 @@ import Controller.BotWeb;
 import Model.Conf;
 import java.awt.Color;
 import java.awt.GridLayout;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.DefaultRowSorter;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
@@ -36,7 +33,7 @@ public class UI extends javax.swing.JFrame {
     private final GraphPanelDouble graphPanel1;
     private final GraphPanelSimple graphPanel2;
     private final LabelSyncer ls;
-    private Thread threadUpdateDBC;
+    private Thread threadUpdate;
 
     /**
      * Creates a new UI.
@@ -48,8 +45,8 @@ public class UI extends javax.swing.JFrame {
         UIManager.put("ProgressBar.foreground", Color.BLUE);
         UIManager.put("ProgressBar.selectionBackground", Color.RED);
         UIManager.put("ProgressBar.selectionForeground", Color.GREEN);
-        b = new BotWeb(jProgressBar1);
-        threadUpdateDBC = new Thread();
+        b = new BotWeb(jProgressBar3, jProgressBar2);
+        threadUpdate = new Thread();
         graphPanel1 = new GraphPanelDouble();
         graphPanel2 = new GraphPanelSimple();
         jTable1.setAutoResizeMode(JTable.AUTO_RESIZE_OFF); // Stackoverflow : Table horizontall scrollable.
@@ -61,11 +58,10 @@ public class UI extends javax.swing.JFrame {
         jTable2.setFillsViewportHeight(true);
         jTable3.setAutoCreateRowSorter(true); // Auto sort
         jTable3.setFillsViewportHeight(true);
-        jSpinner1.setValue(Conf.DEFAULTAUTOUPDATETIMEUPDATER);
-        jSpinner5.setValue(Conf.DEFAULTDAYSTOUPDATE);
-        setImmediate(jSpinner5); // StackOverflow : Jspinner event immediatly works.
+        jSpinner2.setValue(Conf.DEFAULTAUTOUPDATETIMEUPDATER);
+        jSpinner6.setValue(Conf.DEFAULTDAYSTOUPDATE);
+        setImmediate(jSpinner6); // StackOverflow : Jspinner event immediatly works.
         jPanel3.setLayout(new GridLayout(1, 0)); // Two tables : items and seller informations
-//        autoUpdate = new AutoUpdate(jSpinner1, jSpinner2);
     }
 
     /**
@@ -85,11 +81,7 @@ public class UI extends javax.swing.JFrame {
 
 // Update On start
         final UI ui = new UI();
-        ui.getB().updateCVS(); // update CSV
-        ui.updateTable(); // update all tables on start : default sort
-//        ui.getB().updateDBC(); // temp : launch browser
-//        jTabbedPane1.setSelectedIndex(Conf.SETTINGSTAB); // Set default Tab (to put at the end because of event)
-
+        ui.updateRealTime(ui);// update on start
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             @Override
@@ -117,28 +109,30 @@ public class UI extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
         jTabbedPane1 = new javax.swing.JTabbedPane();
-        jPanel1 = new javax.swing.JPanel();
-        jButton1 = new javax.swing.JButton();
-        jToggleButton3 = new javax.swing.JToggleButton();
-        jSpinner1 = new javax.swing.JSpinner();
-        jLabel4 = new javax.swing.JLabel();
-        jButton2 = new javax.swing.JButton();
-        jCheckBox1 = new javax.swing.JCheckBox();
-        jCheckBox2 = new javax.swing.JCheckBox();
-        jCheckBox3 = new javax.swing.JCheckBox();
-        jCheckBox4 = new javax.swing.JCheckBox();
-        jCheckBox5 = new javax.swing.JCheckBox();
-        jCheckBox6 = new javax.swing.JCheckBox();
-        jLabel1 = new javax.swing.JLabel();
-        jSpinner5 = new javax.swing.JSpinner();
-        jButton5 = new javax.swing.JButton();
-        jButton6 = new javax.swing.JButton();
-        jLabel2 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
-        jLabel5 = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
-        jLabel7 = new javax.swing.JLabel();
-        jProgressBar1 = new javax.swing.JProgressBar();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        jPanel4 = new javax.swing.JPanel();
+        jButton3 = new javax.swing.JButton();
+        jButton4 = new javax.swing.JButton();
+        jToggleButton4 = new javax.swing.JToggleButton();
+        jLabel10 = new javax.swing.JLabel();
+        jSpinner2 = new javax.swing.JSpinner();
+        jLabel11 = new javax.swing.JLabel();
+        jLabel13 = new javax.swing.JLabel();
+        jCheckBox7 = new javax.swing.JCheckBox();
+        jCheckBox8 = new javax.swing.JCheckBox();
+        jCheckBox9 = new javax.swing.JCheckBox();
+        jCheckBox10 = new javax.swing.JCheckBox();
+        jCheckBox11 = new javax.swing.JCheckBox();
+        jCheckBox12 = new javax.swing.JCheckBox();
+        jLabel14 = new javax.swing.JLabel();
+        jButton7 = new javax.swing.JButton();
+        jButton8 = new javax.swing.JButton();
+        jLabel15 = new javax.swing.JLabel();
+        jProgressBar2 = new javax.swing.JProgressBar();
+        jSpinner6 = new javax.swing.JSpinner();
+        jLabel9 = new javax.swing.JLabel();
+        jLabel16 = new javax.swing.JLabel();
+        jProgressBar3 = new javax.swing.JProgressBar();
         jPanel2 = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -166,204 +160,215 @@ public class UI extends javax.swing.JFrame {
         });
         jScrollPane1.setViewportView(jTable1);
 
-        jButton1.setText("Refresh Today's data + Table");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        jButton3.setText("Refresh Today's data + Table");
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                jButton3ActionPerformed(evt);
             }
         });
 
-        jToggleButton3.setText("Auto Refresh Mode");
-        jToggleButton3.addActionListener(new java.awt.event.ActionListener() {
+        jButton4.setText("Refresh Table only");
+        jButton4.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jToggleButton3ActionPerformed(evt);
+                jButton4ActionPerformed(evt);
             }
         });
 
-        jLabel4.setText("Auto Refresh Frequency :");
-
-        jButton2.setText("Refresh Table only");
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
+        jToggleButton4.setText("Auto Refresh Mode");
+        jToggleButton4.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
+                jToggleButton4ActionPerformed(evt);
             }
         });
 
-        jCheckBox1.setText("Green");
-        jCheckBox1.addActionListener(new java.awt.event.ActionListener() {
+        jLabel10.setText("Auto Refresh Frequency :");
+
+        jLabel11.setText("seconds.");
+
+        jLabel13.setText("2) Filter transactions by Rarity.");
+
+        jCheckBox7.setText("Green");
+        jCheckBox7.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jCheckBox1ActionPerformed(evt);
+                jCheckBox7ActionPerformed(evt);
             }
         });
 
-        jCheckBox2.setSelected(true);
-        jCheckBox2.setText("Blue");
-        jCheckBox2.addActionListener(new java.awt.event.ActionListener() {
+        jCheckBox8.setSelected(true);
+        jCheckBox8.setText("Blue");
+        jCheckBox8.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jCheckBox2ActionPerformed(evt);
+                jCheckBox8ActionPerformed(evt);
             }
         });
 
-        jCheckBox3.setSelected(true);
-        jCheckBox3.setText("Pink");
-        jCheckBox3.addActionListener(new java.awt.event.ActionListener() {
+        jCheckBox9.setSelected(true);
+        jCheckBox9.setText("Pink");
+        jCheckBox9.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jCheckBox3ActionPerformed(evt);
+                jCheckBox9ActionPerformed(evt);
             }
         });
 
-        jCheckBox4.setSelected(true);
-        jCheckBox4.setText("Orange");
-        jCheckBox4.addActionListener(new java.awt.event.ActionListener() {
+        jCheckBox10.setSelected(true);
+        jCheckBox10.setText("Orange");
+        jCheckBox10.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jCheckBox4ActionPerformed(evt);
+                jCheckBox10ActionPerformed(evt);
             }
         });
 
-        jCheckBox5.setSelected(true);
-        jCheckBox5.setText("Red");
-        jCheckBox5.addActionListener(new java.awt.event.ActionListener() {
+        jCheckBox11.setSelected(true);
+        jCheckBox11.setText("Red");
+        jCheckBox11.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jCheckBox5ActionPerformed(evt);
+                jCheckBox11ActionPerformed(evt);
             }
         });
 
-        jCheckBox6.setSelected(true);
-        jCheckBox6.setText("White");
-        jCheckBox6.addActionListener(new java.awt.event.ActionListener() {
+        jCheckBox12.setSelected(true);
+        jCheckBox12.setText("White");
+        jCheckBox12.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jCheckBox6ActionPerformed(evt);
+                jCheckBox12ActionPerformed(evt);
             }
         });
 
-        jLabel1.setText("Number of days to update from now (30 days = add all successfull transactions of the last month)");
+        jLabel14.setText("3) Update the database of all successful transactions. The more you have successful transactions, the more you are able to predict which item you'll buy.");
 
-        jSpinner5.addChangeListener(new javax.swing.event.ChangeListener() {
+        jButton7.setText("Update Database DBC");
+        jButton7.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton7ActionPerformed(evt);
+            }
+        });
+
+        jButton8.setText("Clean DBC");
+        jButton8.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton8ActionPerformed(evt);
+            }
+        });
+
+        jLabel15.setText("Number of days to update from now (30 days = add all successfull transactions of the last month)");
+
+        jProgressBar2.setMaximumSize(new java.awt.Dimension(32767, 30));
+        jProgressBar2.setMinimumSize(new java.awt.Dimension(10, 30));
+        jProgressBar2.setStringPainted(true);
+
+        jSpinner6.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                jSpinner5StateChanged(evt);
+                jSpinner6StateChanged(evt);
             }
         });
 
-        jButton5.setText("Update Database DBC");
-        jButton5.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton5ActionPerformed(evt);
-            }
-        });
+        jLabel9.setText("1) Refresh your Today's data. This will download all items available. This list changes each 15 min.");
 
-        jButton6.setText("Clean DBC");
-        jButton6.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton6ActionPerformed(evt);
-            }
-        });
+        jLabel16.setText("days.");
 
-        jLabel2.setText("1) Refresh your Today's data. This will download all items available. This list changes each 15 min.");
+        jProgressBar3.setMaximumSize(new java.awt.Dimension(32767, 30));
+        jProgressBar3.setMinimumSize(new java.awt.Dimension(10, 30));
+        jProgressBar3.setStringPainted(true);
 
-        jLabel3.setText("2) Filter transactions by Rarity.");
-
-        jLabel5.setText("3) Update the database of all successful transactions. The more you have successful transactions, the more you are able to predict which item you'll buy.");
-
-        jLabel6.setText("seconds.");
-
-        jLabel7.setText("days.");
-
-        jProgressBar1.setStringPainted(true);
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
+        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
+        jPanel4.setLayout(jPanel4Layout);
+        jPanel4Layout.setHorizontalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jProgressBar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(jButton5)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jProgressBar2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jProgressBar3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel4Layout.createSequentialGroup()
+                                .addComponent(jButton3)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jButton6)
+                                .addComponent(jButton4)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jToggleButton4)
                                 .addGap(18, 18, 18)
-                                .addComponent(jLabel1)
+                                .addComponent(jLabel10)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jSpinner5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel7))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(jButton1)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jButton2)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jToggleButton3)
+                                .addComponent(jSpinner2, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(18, 18, 18)
-                                .addComponent(jLabel4)
+                                .addComponent(jLabel11))
+                            .addGroup(jPanel4Layout.createSequentialGroup()
+                                .addComponent(jCheckBox7)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jCheckBox8)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jCheckBox9)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jCheckBox10)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jCheckBox11)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jCheckBox12))
+                            .addComponent(jLabel14)
+                            .addComponent(jLabel9)
+                            .addGroup(jPanel4Layout.createSequentialGroup()
+                                .addComponent(jButton7)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jButton8)
+                                .addGap(18, 18, 18)
+                                .addComponent(jLabel15)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jSpinner6, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel6))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(jCheckBox1)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jCheckBox2)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jCheckBox3)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jCheckBox4)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jCheckBox5)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jCheckBox6))
-                            .addComponent(jLabel2)
-                            .addComponent(jLabel3)
-                            .addComponent(jLabel5))
-                        .addGap(0, 11, Short.MAX_VALUE)))
+                                .addComponent(jLabel16))
+                            .addComponent(jLabel13))
+                        .addGap(0, 20, Short.MAX_VALUE)))
                 .addContainerGap())
         );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
+        jPanel4Layout.setVerticalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel2)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton2)
-                    .addComponent(jToggleButton3)
-                    .addComponent(jLabel4)
-                    .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel6))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel3)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jCheckBox1)
-                    .addComponent(jCheckBox2)
-                    .addComponent(jCheckBox3)
-                    .addComponent(jCheckBox4)
-                    .addComponent(jCheckBox5)
-                    .addComponent(jCheckBox6))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel5)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton5)
-                    .addComponent(jButton6)
-                    .addComponent(jSpinner5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel1)
-                    .addComponent(jLabel7))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jProgressBar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap(44, Short.MAX_VALUE))
+                .addComponent(jLabel9)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButton4)
+                    .addComponent(jToggleButton4)
+                    .addComponent(jLabel10)
+                    .addComponent(jSpinner2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel11))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jProgressBar3, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 9, Short.MAX_VALUE)
+                .addComponent(jLabel13)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jCheckBox7)
+                    .addComponent(jCheckBox8)
+                    .addComponent(jCheckBox9)
+                    .addComponent(jCheckBox10)
+                    .addComponent(jCheckBox11)
+                    .addComponent(jCheckBox12))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel14)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jButton7)
+                    .addComponent(jButton8)
+                    .addComponent(jSpinner6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel15)
+                    .addComponent(jLabel16))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jProgressBar2, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
 
-        jTabbedPane1.addTab("Settings", jPanel1);
+        jScrollPane4.setViewportView(jPanel4);
+
+        jTabbedPane1.addTab("Settings", jScrollPane4);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 1032, Short.MAX_VALUE)
+            .addGap(0, 1056, Short.MAX_VALUE)
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -445,7 +450,7 @@ public class UI extends javax.swing.JFrame {
                     .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jTabbedPane1))
+                .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 1076, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -463,85 +468,84 @@ public class UI extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        updateData();
-    }//GEN-LAST:event_jButton1ActionPerformed
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        updateRealTime(this); 
+    }//GEN-LAST:event_jButton3ActionPerformed
 
-    private void jToggleButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton3ActionPerformed
-        final UI ui = this;
-        if (autoUpdate == null) {
-            autoUpdate = new AutoUpdate(jSpinner1, ui);
-        } else {
-            autoUpdate.stopAutoUpdate();
-            autoUpdate = new AutoUpdate(jSpinner1, ui);
-        }
-        if (jToggleButton3.isSelected()) {
-            autoUpdate.startAutoUpdate();
-        }
-    }//GEN-LAST:event_jToggleButton3ActionPerformed
-
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+    private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
         getB().updateCVS();
         updateTable();
-    }//GEN-LAST:event_jButton2ActionPerformed
+    }//GEN-LAST:event_jButton4ActionPerformed
 
-    private void jCheckBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox1ActionPerformed
+    private void jToggleButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton4ActionPerformed
+        final UI ui = this;
+        if (autoUpdate == null) {
+            autoUpdate = new AutoUpdate(jSpinner2, ui);
+        } else {
+            autoUpdate.stopAutoUpdate();
+            autoUpdate = new AutoUpdate(jSpinner2, ui);
+        }
+        if (jToggleButton4.isSelected()) {
+            autoUpdate.startAutoUpdate();
+        }
+    }//GEN-LAST:event_jToggleButton4ActionPerformed
+
+    private void jCheckBox7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox7ActionPerformed
         updateTable();
-    }//GEN-LAST:event_jCheckBox1ActionPerformed
+    }//GEN-LAST:event_jCheckBox7ActionPerformed
 
-    private void jCheckBox2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox2ActionPerformed
+    private void jCheckBox8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox8ActionPerformed
         updateTable();
-    }//GEN-LAST:event_jCheckBox2ActionPerformed
+    }//GEN-LAST:event_jCheckBox8ActionPerformed
 
-    private void jCheckBox3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox3ActionPerformed
+    private void jCheckBox9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox9ActionPerformed
         updateTable();
-    }//GEN-LAST:event_jCheckBox3ActionPerformed
+    }//GEN-LAST:event_jCheckBox9ActionPerformed
 
-    private void jCheckBox4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox4ActionPerformed
+    private void jCheckBox10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox10ActionPerformed
         updateTable();
-    }//GEN-LAST:event_jCheckBox4ActionPerformed
+    }//GEN-LAST:event_jCheckBox10ActionPerformed
 
-    private void jCheckBox5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox5ActionPerformed
+    private void jCheckBox11ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox11ActionPerformed
         updateTable();
-    }//GEN-LAST:event_jCheckBox5ActionPerformed
+    }//GEN-LAST:event_jCheckBox11ActionPerformed
 
-    private void jCheckBox6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox6ActionPerformed
+    private void jCheckBox12ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox12ActionPerformed
         updateTable();
-    }//GEN-LAST:event_jCheckBox6ActionPerformed
+    }//GEN-LAST:event_jCheckBox12ActionPerformed
 
-    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
-        if (threadUpdateDBC.isAlive()) {
+    private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton7ActionPerformed
+        if (threadUpdate.isAlive()) {
             System.out.println("UI: W: A Thread for updateDBC is already running.");
         } else {
-            threadUpdateDBC = new Thread() {
+            final UI ui = this;
+            threadUpdate = new Thread() {
                 @Override
                 public void run() {
-                    getB().updateDBC(jProgressBar1);
-//                    Conf.infoBox(Conf.MESSAGERESTART, Conf.MESSAGETITLERESTART);
-                    try {
-                        SwingUtilities.invokeAndWait(new Runnable() { // Threads and swing patch (edt)
-                            @Override
-                            public void run() {
-                                updateData();
-                            }
-                        });
-                    } catch (InterruptedException | InvocationTargetException ex) {
-                        Logger.getLogger(UI.class.getName()).log(Level.SEVERE, null, ex);
-                    }
+                    jProgressBar2.setIndeterminate(true); // activate loading
+                    getB().updateDBC();
+                    ui.getB().updateRealTime(); // Must be before invokeAndWait because it takes time to execute
+                    SwingUtilities.invokeLater(new Runnable() { // Threads and swing patch (edt)
+                        @Override
+                        public void run() {
+                            updateTable(); // must be inside invokeAndWait
+                        }
+                    });
 
                 }
             };
-            threadUpdateDBC.start();
+            threadUpdate.start();
         }
-    }//GEN-LAST:event_jButton5ActionPerformed
+    }//GEN-LAST:event_jButton7ActionPerformed
 
-    private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
+    private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton8ActionPerformed
         getB().cleanDBC();
-    }//GEN-LAST:event_jButton6ActionPerformed
+        updateTable();
+    }//GEN-LAST:event_jButton8ActionPerformed
 
-    private void jSpinner5StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jSpinner5StateChanged
-        getB().setDaysToUpdate((Integer) jSpinner5.getValue());
-    }//GEN-LAST:event_jSpinner5StateChanged
+    private void jSpinner6StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jSpinner6StateChanged
+        getB().setDaysToUpdate((Integer) jSpinner6.getValue());
+    }//GEN-LAST:event_jSpinner6StateChanged
 
     public void switchSniffer() {
         getB().runSniffer();
@@ -556,7 +560,7 @@ public class UI extends javax.swing.JFrame {
 // Model
         TableModel tm = jTable1.getModel();
         Conf.removeLines(jTable1);
-        getB().updateTable((DefaultTableModel) tm, jCheckBox1, jCheckBox2, jCheckBox3, jCheckBox4, jCheckBox5, jCheckBox6);
+        getB().updateTable((DefaultTableModel) tm, jCheckBox7, jCheckBox8, jCheckBox9, jCheckBox10, jCheckBox11, jCheckBox12);
 
 // Auto Select First row
 //        if (ls.table.getRowCount() >= 1) {
@@ -587,12 +591,35 @@ public class UI extends javax.swing.JFrame {
         sorter3.sort();
     }
 
-    public void updateData() {
-        getB().requestClient();
-        getB().updateCVS();
-        updateTable();
+    /**
+     * Update data by connecting to the url and recovering new items
+     *
+     * @param ui
+     */
+    public void updateRealTime(final UI ui) {
+        if (threadUpdate.isAlive()) {
+            System.out.println("UI: W: A Thread for updateDBC is already running.");
+        } else {
+            threadUpdate = new Thread() {
+                @Override
+                public void run() {
+                    ui.getB().updateRealTime(); // This method must be before invokeLater because it takes time to execute
+                    SwingUtilities.invokeLater(new Runnable() { // Threads and swing patch (edt)
+                        @Override
+                        public void run() {
+                            ui.updateTable(); // This method must be in the invokeLater
+                        }
+                    });
+
+                }
+            };
+            threadUpdate.start();
+        }
     }
 
+    /**
+     * TODO: DELETE THIS OLD UNUSED METHOD
+     */
     public void startSniffer() {
         getB().requestSniffer();
         getB().updateCVSSniffer();
@@ -602,7 +629,7 @@ public class UI extends javax.swing.JFrame {
     /**
      * StackOverflow : Jspinner event immediatly works.
      *
-     * @param jSpinner5
+     * @param jSpinner
      */
     private void setImmediate(JSpinner j) {
         JComponent comp = j.getEditor();
@@ -657,37 +684,39 @@ public class UI extends javax.swing.JFrame {
         }
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton5;
-    private javax.swing.JButton jButton6;
-    private javax.swing.JCheckBox jCheckBox1;
-    private javax.swing.JCheckBox jCheckBox2;
-    private javax.swing.JCheckBox jCheckBox3;
-    private javax.swing.JCheckBox jCheckBox4;
-    private javax.swing.JCheckBox jCheckBox5;
-    private javax.swing.JCheckBox jCheckBox6;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
-    private javax.swing.JPanel jPanel1;
+    private javax.swing.JButton jButton3;
+    private javax.swing.JButton jButton4;
+    private javax.swing.JButton jButton7;
+    private javax.swing.JButton jButton8;
+    private javax.swing.JCheckBox jCheckBox10;
+    private javax.swing.JCheckBox jCheckBox11;
+    private javax.swing.JCheckBox jCheckBox12;
+    private javax.swing.JCheckBox jCheckBox7;
+    private javax.swing.JCheckBox jCheckBox8;
+    private javax.swing.JCheckBox jCheckBox9;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel13;
+    private javax.swing.JLabel jLabel14;
+    private javax.swing.JLabel jLabel15;
+    private javax.swing.JLabel jLabel16;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
-    private javax.swing.JProgressBar jProgressBar1;
+    private javax.swing.JPanel jPanel4;
+    private javax.swing.JProgressBar jProgressBar2;
+    private javax.swing.JProgressBar jProgressBar3;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
-    private javax.swing.JSpinner jSpinner1;
-    private javax.swing.JSpinner jSpinner5;
+    private javax.swing.JScrollPane jScrollPane4;
+    private javax.swing.JSpinner jSpinner2;
+    private javax.swing.JSpinner jSpinner6;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTable jTable1;
     private javax.swing.JTable jTable2;
     private javax.swing.JTable jTable3;
-    private javax.swing.JToggleButton jToggleButton3;
+    private javax.swing.JToggleButton jToggleButton4;
     // End of variables declaration//GEN-END:variables
 
     /**

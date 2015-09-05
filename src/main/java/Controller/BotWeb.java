@@ -45,13 +45,18 @@ public class BotWeb {
     public JsExecution currentDay;
     public List<JsExecution> jsList;
     public WebClient webClient;
+    public WebClient realTimeWebClient;
     public int daysToUpdate;
     public int daysUpdated;
     public boolean stopUpdate;
-    private final JProgressBar jProgressBar1;
+    private final JProgressBar jpMonths;
+    private final JProgressBar jpRealTime;
+    private boolean firstPageIsLoaded;
+    private HtmlPage mainHtml;
 
-    public BotWeb(JProgressBar jp) {
-        jProgressBar1 = jp;
+    public BotWeb(JProgressBar jpr, JProgressBar jpm) {
+        jpMonths = jpm;
+        jpRealTime = jpr;
         itemList = new ArrayList<>();
         itemListNew = new ArrayList<>();
         itemFrequency = new ArrayList<>();
@@ -68,17 +73,73 @@ public class BotWeb {
         currentDay = new JsExecution();
         jsList = new ArrayList<>();
         webClient = null;
+        realTimeWebClient = null;
         daysToUpdate = Conf.DEFAULTDAYSTOUPDATE;
         daysUpdated = 0;
         stopUpdate = false;
+        firstPageIsLoaded = false;
+        mainHtml = null;
+    }
+
+    /**
+     * Real time update
+     *
+     */
+    public void updateRealTime() {
+        // Turn warnings off
+        java.util.logging.Logger.getLogger("com.gargoylesoftware.htmlunit").setLevel(java.util.logging.Level.OFF);
+        java.util.logging.Logger.getLogger("org.apache.http").setLevel(java.util.logging.Level.OFF);
+        int step = 0, maxSteps = 4;
+
+        try {
+            if (!firstPageIsLoaded) {
+// Initialize browser
+                System.out.println("* updateRealTime: I: Initialization : Initializing browser");
+                jpRealTime.setIndeterminate(true);
+                setWebClient(new WebClient(BrowserVersion.CHROME));
+
+// Page 1 : Connect
+                System.out.println("* updateRealTime: I: PAGE 1 : Connecting to " + Conf.URLMAIN);
+                mainHtml = getWebClient().getPage(Conf.URLMAIN);
+                firstPageIsLoaded = true;
+                jpRealTime.setIndeterminate(false);
+            }
+
+// Page 2 : View Current Sales
+            System.out.println("* updateRealTime: I: PAGE 2 : View Current Sales");
+            step++;
+            jpRealTime.setValue((step * 100) / maxSteps);
+            final HtmlSubmitInput button1 = mainHtml.getFirstByXPath("//*[@id=\"Button1\"]");
+            final HtmlPage p2 = button1.click();
+            step++;
+            jpRealTime.setValue((step * 100) / maxSteps);
+//            System.out.println(p2.asXml());
+//            System.out.println("TODO: Paarse that shit");
+            Document doc = Jsoup.parse(p2.asXml(), Conf.URLMAIN);
+            step++;
+            jpRealTime.setValue((step * 100) / maxSteps);
+            addAllItems(doc);
+            step++;
+            jpRealTime.setValue((step * 100) / maxSteps);
+
+// Compute statistics and Reset Bot
+            compareDataClient();
+            step++;
+            jpRealTime.setValue((step * 100) / maxSteps);
+            resetBot();
+            step = 0;
+            jpRealTime.setValue((step * 100) / maxSteps);
+            System.out.println("* updateRealTime: I: Statistics: All done !");
+        } catch (FailingHttpStatusCodeException | IOException ex) {
+            Logger.getLogger(BotWeb.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     /**
      * Use the htmlUnit Internet browser to update DBC
      *
-     * @param jp
      */
-    public void updateDBC(JProgressBar jp) {
+    public void updateDBC() {
 // Turn warnings off
         java.util.logging.Logger.getLogger("com.gargoylesoftware.htmlunit").setLevel(java.util.logging.Level.OFF);
         java.util.logging.Logger.getLogger("org.apache.http").setLevel(java.util.logging.Level.OFF);
@@ -101,7 +162,7 @@ public class BotWeb {
 // Page 3+ : JS Click Calendar
             System.out.println("* updateDBC: I: PAGE 3+ : JS Click Calendar");
             setDbc(new DBC()); // TODO : use hashmap with key=date and remove 'new DBC()'.
-            runAllMonths(p2);
+            runAllMonths(p2, jpMonths);
 
 // Pae 4 : Next in the same day.
 //            System.out.println("* updateDBC: I: PAGE 4 : Next");
@@ -124,12 +185,13 @@ public class BotWeb {
      * @param htmlPage
      * @return
      */
-    private HtmlPage runAllMonths(final HtmlPage htmlPage) {
+    private HtmlPage runAllMonths(final HtmlPage htmlPage, JProgressBar jp) {
+        jp.setIndeterminate(false); // desactivate loading on the progressBar
         HtmlPage res = htmlPage;
         updateStopUpdate();
         for (int i = 1; i <= Conf.MAXMONTH; i++) {
             if (isStopUpdate()) { // after runMonth(htmlPage)
-                    System.out.println(">>>>>>>>>>>>>>>>> STOP");
+                System.out.println(">>>>>>>>>>>>>>>>> STOP");
                 break;
             } else {
                 res = runMonth(res);
@@ -227,7 +289,7 @@ public class BotWeb {
                     SwingUtilities.invokeLater(new Runnable() { // update gui progress bar
                         @Override
                         public void run() {
-                            jProgressBar1.setValue((daysUpdated * 100) / daysToUpdate);
+                            jpMonths.setValue((daysUpdated * 100) / daysToUpdate);
                         }
                     });
                 }
@@ -246,7 +308,7 @@ public class BotWeb {
         SwingUtilities.invokeLater(new Runnable() { // update gui progress bar
             @Override
             public void run() {
-                jProgressBar1.setValue((daysUpdated * 100) / daysToUpdate);
+                jpMonths.setValue((daysUpdated * 100) / daysToUpdate);
             }
         });
 
@@ -461,6 +523,10 @@ public class BotWeb {
         }
     }
 
+    /**
+     * TODO: REMOVE THOISOLD UNUSED METHOD Read a csvfile contaning real time
+     * data
+     */
     public void updateCVS() {
 //        printInfos();
         updateDbClient();
@@ -510,8 +576,101 @@ public class BotWeb {
         }
     }
 
+    /**
+     * Sleep a random time
+     */
+    void sleepRandom() {
+        int sleepRand = Conf.randInt(Conf.SNIFFERMINSLEEP, Conf.SNIFFERMAXSLEEP),
+                sleepTime = 1000 * sleepRand;
+        System.out.println("sleepRandom: I: Sleeping " + sleepRand + "s ...");
+        try {
+            Thread.sleep(sleepTime);                 //1000 milliseconds is one second.
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    /**
+     * Sleep a short random time like sleepRandom()
+     */
+    void sleepRandomShort() {
+        int sleepTime = Conf.UPDATERSHORTSLEEPTIME;
+        System.out.println("sleepRandomShort: I: Sleeping " + sleepTime + "s ...");
+        try {
+            Thread.sleep(sleepTime);                 //1000 milliseconds is one second.
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    /**
+     * TODO: REMOVE THIS UNUSED METHOD Store new items in itemList from the
+     * external html file recovered with a shell curl script. Use Jsoup library
+     * to parse this file.
+     */
+    public void updateDbClient() {
+        try {
+            File in = new File(Conf.PATHHTML + Conf.FILEHTML);
+            Document doc = Jsoup.parse(in, null);
+            addAllItems(doc);
+
+        } catch (IOException ex) {
+            Logger.getLogger(BotWeb.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    /**
+     * Clean All DBC but not the external file.
+     */
+    public void cleanDBC() {
+        setDbc(new DBC());
+        System.out.println("cleanDBC: I: All database is now empty. The external .csv file has not changed yet.");
+    }
+
+    void printTopLowBid() {
+//        Collections.sort(itemList, new ItemBuyoutComparator());
+        Item.printHeader();
+        for (Item i : getItemList()) {
+            if (i.getNoobScore() >= 5) {
+                i.print();
+            }
+        }
+    }
+
+    private int getDayOfMonth() {
+        int res;
+        Calendar cal = Calendar.getInstance();
+        res = cal.get(Calendar.DAY_OF_MONTH);
+
+        return res;
+    }
+
+    /**
+     * Updates Sniffer
+     */
     public void updateCVSSniffer() {
         getSn().updateCVSSniffer();
+    }
+
+    /**
+     * Print starting infos like the time to run the server
+     */
+    void printInfos() {
+        System.out.println("printInfos: I: Starting server for " + Conf.RUNTIME / 1000 + "s ...\n");
+    }
+
+    /**
+     * Execute shell curl script to recover data
+     */
+    public void requestClient() {
+        Conf.executeBlocking(Conf.CURL, Conf.PATHTOEXECUTESHELL);
+    }
+
+    /**
+     * Execute shell curl script from sniffer to recover data
+     */
+    public void requestSniffer() {
+        Conf.executeBlocking(Conf.SNIFFER, Conf.PATHTOEXECUTESHELL);
     }
 
     /**
@@ -528,22 +687,6 @@ public class BotWeb {
 
     public List<ItemDB> getItemFrequency() {
         return itemFrequency;
-    }
-
-    private int getDayOfMonth() {
-        int res;
-        Calendar cal = Calendar.getInstance();
-        res = cal.get(Calendar.DAY_OF_MONTH);
-
-        return res;
-    }
-
-    /**
-     * Clean All DBC but not the external file.
-     */
-    public void cleanDBC() {
-        setDbc(new DBC());
-        System.out.println("cleanDBC: I: All database is now empty. The external .csv file has not changed yet.");
     }
 
     /**
@@ -742,77 +885,18 @@ public class BotWeb {
         this.stopUpdate = stopUpdate;
     }
 
-    void printTopLowBid() {
-//        Collections.sort(itemList, new ItemBuyoutComparator());
-        Item.printHeader();
-        for (Item i : getItemList()) {
-            if (i.getNoobScore() >= 5) {
-                i.print();
-            }
-        }
+    /**
+     * @return the realTimeWebClient
+     */
+    public WebClient getRealTimeWebClient() {
+        return realTimeWebClient;
     }
 
     /**
-     * Print starting infos like the time to run the server
+     * @param realTimeWebClient the realTimeWebClient to set
      */
-    void printInfos() {
-        System.out.println("printInfos: I: Starting server for " + Conf.RUNTIME / 1000 + "s ...\n");
-    }
-
-    /**
-     * Execute shell curl script to recover data
-     */
-    public void requestClient() {
-        Conf.executeBlocking(Conf.CURL, Conf.PATHTOEXECUTESHELL);
-    }
-
-    /**
-     * Execute shell curl script from sniffer to recover data
-     */
-    public void requestSniffer() {
-        Conf.executeBlocking(Conf.SNIFFER, Conf.PATHTOEXECUTESHELL);
-    }
-
-    /**
-     * Sleep a random time
-     */
-    void sleepRandom() {
-        int sleepRand = Conf.randInt(Conf.SNIFFERMINSLEEP, Conf.SNIFFERMAXSLEEP),
-                sleepTime = 1000 * sleepRand;
-        System.out.println("sleepRandom: I: Sleeping " + sleepRand + "s ...");
-        try {
-            Thread.sleep(sleepTime);                 //1000 milliseconds is one second.
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-        }
-    }
-
-    /**
-     * Sleep a short random time like sleepRandom()
-     */
-    void sleepRandomShort() {
-        int sleepTime = Conf.UPDATERSHORTSLEEPTIME;
-        System.out.println("sleepRandomShort: I: Sleeping " + sleepTime + "s ...");
-        try {
-            Thread.sleep(sleepTime);                 //1000 milliseconds is one second.
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-        }
-    }
-
-    /**
-     * Store new items in itemList from the external html file recovered with a
-     * shell curl script. Use Jsoup library to parse this file.
-     */
-    public void updateDbClient() {
-        try {
-            File in = new File(Conf.PATHHTML + Conf.FILEHTML);
-            Document doc = Jsoup.parse(in, null);
-            addAllItems(doc);
-
-        } catch (IOException ex) {
-            Logger.getLogger(BotWeb.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    public void setRealTimeWebClient(WebClient realTimeWebClient) {
+        this.realTimeWebClient = realTimeWebClient;
     }
 
 }

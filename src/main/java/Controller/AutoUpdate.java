@@ -9,8 +9,10 @@ import javax.swing.JSpinner;
 import javax.swing.SwingUtilities;
 
 /**
+ * TODO: REMOVE THIS OLD UNUSED CLASS
  * This Class will perform an auto Update without beeing blacklisted. Using
  * random time sleep before refreshing data.
+ * 
  */
 public class AutoUpdate extends Thread {
 
@@ -35,7 +37,7 @@ public class AutoUpdate extends Thread {
                 SwingUtilities.invokeAndWait(new Runnable() { // deal with threads and swing and EDT : http://gfx.developpez.com/tutoriel/java/swing/swing-threading/
                     @Override
                     public void run() {
-                        ui.updateData(); // only usefull part
+//                        ui.updateRealTime(); // only usefull part
                     }
                 });
                 System.out.println("AutoUpdate: I: Update Done.");

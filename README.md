@@ -12,32 +12,38 @@ https://drive.google.com/file/d/0B08OYS7z8Q8JQXJOWF8taGllVzQ/view?usp=sharing
 
 ------------------ NEXT ------------------
 * Market History Analytics
-- BUG MAJOR : AvgBidProfit must use the green graph and not the blue !
+++ BUG MAJOR : AvgBidProfit must use the green graph and not the blue !
 - Remove DBS and use the hashmap of DBC instead.
 Add a column AvgPriceDurability with the avg price of items adjusted with durabilities. AvgPriceDurability = (it1*dur1 + it2*dur2 + ... + itN*urN) / N
+
+* MarketPlace real time Analytics
+
+* Display
+- When an update is done, put in red increased bid
+- Print the total number of items
+- The jSpinner for the auto refresh must change if value changes (like the autospinner event for the month update).
+- Make a stop button for the month update
+- Graphics: Reduce top and bottom margins
+- AutoSelect first row
+-- Create a column with normalized seller reputation: Display max seller reputation or a new column seller reputation percentage
+-- Resolve vertical scroll bug
+
+* Update
+++ Update Next elements for each days with htmlUnit
+
+
+------------------ v0.6 (05.09.2015) ------------------
+* Market History Analytics
 -- Use spaces when there are big numbers in the y axis (as a separator to read easily)
 
 * MarketPlace real time Analytics
 
 * Display
-When an update is done, put in red increased bid
-Print the total number of items
-Normalizing seller reputation: Display max seller reputation or a new column seller reputation percentage
--- Resolve vertical scroll bug
+- Progress Bar for the Update of Today's data
 
 * Update
-Update Next elements for each days with htmlUnit
-
-
------------------- v0.6 (00.00.2015) ------------------
-* Market History Analytics
-
-* MarketPlace real time Analytics
-
-* Display
-
-* Update
-
+- Compatible Windows, Mac, Unix, ... : 
+- Update real time data must use htmlUnit instead of a curl shell script
 
 ------------------ v0.5 (20.08.2015) ------------------
 * Market History Analytics
