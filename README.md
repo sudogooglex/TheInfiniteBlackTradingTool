@@ -82,8 +82,8 @@ Add a column AvgPriceDurability with the avg price of items adjusted with durabi
 
 ------------------ v0.3 (02.08.2015) ------------------
 * Market History Analytics
-- Abandonned: Sniffer. Reason : History archive gives only data for a fix day. Can't get last day with a curl script.
-- Abandonned: Filter items by rarity. Reason : AvgBidProfit sorter is enough.
+- Abandoned: Sniffer. Reason : History archive gives only data for a fix day. Can't get last day with a curl script.
+- Abandoned: Filter items by rarity. Reason : AvgBidProfit sorter is enough.
 - Display a line for each rarity + a line for all rarity
 - Use the durability variable in graphs : pondarated price = price * durability / 100.
 - Display the item frequency graph
@@ -97,7 +97,7 @@ Add a column AvgPriceDurability with the avg price of items adjusted with durabi
 - Change titles names and column size
 
 * Update
-- Abandonned: Create an automatize update button. Reason : Sniffer Abandonned.
+- Abandoned: Create an automatize update button. Reason : Sniffer Abandoned.
 - Update : Was not working when some items are selected
 
 
